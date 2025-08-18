@@ -1,11 +1,34 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useDarkMode } from '../../contexts/DarkModeContext'
 import { useAuth } from '../../contexts/AuthContext'
-import { User, Shield, Globe, Lock, MapPin, CreditCard, Mail } from 'lucide-react'
+import { authApi } from '../../api/authApi'
+import { User, Shield, Globe, Lock, MapPin, CreditCard, Mail, Store } from 'lucide-react' // 1. Imported Store icon
 
 const Profile = () => {
   const { isDarkMode } = useDarkMode()
-  const { user } = useAuth()
+  const { user, token, login } = useAuth()
+
+  // Ensure we always display the latest user info from backend
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const data = await authApi.getMe()
+        if (data?.success && data.user) {
+          const storedToken = localStorage.getItem('token')
+          if (storedToken && storedToken !== 'null' && storedToken !== 'undefined') {
+            login(data.user, storedToken)
+          } else if (token) {
+            login(data.user, token)
+          }
+        }
+      } catch (_err) {
+        // ignore; fallback to context user
+      }
+    }
+    refresh()
+    // run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const profileCards = [
     {
@@ -28,6 +51,14 @@ const Profile = () => {
       description: 'Manage your public profile information and visibility',
       icon: Globe,
       href: '/profile/public'
+    },
+    // 2. Added the new "My Shop" card here
+    {
+      id: 'my-shop',
+      title: 'My Shop',
+      description: 'Manage your shop, products, and orders',
+      icon: Store,
+      href: '/profile/shop'
     },
     {
       id: 'privacy',
@@ -63,13 +94,23 @@ const Profile = () => {
     <div className={`min-h-screen transition-colors duration-200 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Profile Settings
-          </h1>
-          <p className={`mt-2 text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Manage your account settings and preferences
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Profile Settings
+            </h1>
+            <p className={`mt-2 text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Manage your account settings and preferences
+            </p>
+          </div>
+          <a
+            href="/"
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              isDarkMode ? 'border border-gray-600 text-gray-300 hover:bg-gray-800' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Home
+          </a>
         </div>
 
         {/* Profile Cards Grid */}

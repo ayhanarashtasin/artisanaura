@@ -30,8 +30,6 @@ const SignIn = () => {
         const data = await response.json();
 
         if (data.success) {
-            alert('Login successful!');
-
             login(data.user, data.token || 'dummy-token');
             // Store user data and token if needed
              if (staySignedIn) {

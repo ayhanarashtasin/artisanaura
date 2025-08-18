@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Gift, ShoppingCart, Menu, Sun, Moon, User, Bell, HelpCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, Heart, Gift, ShoppingCart, Menu, Sun, Moon, User, Bell, HelpCircle,MessageCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import Chatbot from './chatbot';
 
 const Header = () => {
   const [showTooltip, setShowTooltip] = useState('');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false); // State for account menu
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const categoryRef = useRef(null);
-  const accountMenuRef = useRef(null); // Ref for account menu
+  const accountMenuRef = useRef(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,6 +33,28 @@ const Header = () => {
     };
   }, []);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // Navigate to search results page with query parameter
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const toggleChat = () => {
+  setIsChatOpen(!isChatOpen);
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
+  };
+
   const categories = [
     'Accessories', 'Art & Collectibles', 'Baby', 'Bags & Purses', 'Bath & Beauty',
     'Books, Movies & Music', 'Clothing', 'Craft Supplies & Tools', 'Electronics & Accessories',
@@ -41,7 +67,12 @@ const Header = () => {
       <div className="px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-6">
-            <Link to="/" className="text-orange-500 text-2xl font-bold">ArtisanAura</Link>
+            <Link to="/" aria-label="Go to Home" className="flex items-center group">
+              <svg className="w-8 h-8 text-orange-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2l2.6 5.7 6.3.9-4.5 4.3 1.1 6.3L12 16.9 6.5 19.2 7.6 13 3.1 8.6l6.3-.9L12 2z"/>
+              </svg>
+              <span className="ml-2 text-2xl font-bold text-orange-500 group-hover:text-orange-600 transition-colors">ArtisanAura</span>
+            </Link>
             <div className="relative hidden md:block" ref={categoryRef}>
               <button
                 onClick={() => setIsCategoryOpen(!isCategoryOpen)}
@@ -63,12 +94,24 @@ const Header = () => {
           </div>
 
           <div className="flex-1 max-w-2xl mx-6">
-            <div className="relative">
-              <input type="text" placeholder="Search for anything" className={`w-full px-4 py-2 border-2 rounded-full focus:border-orange-500 focus:outline-none transition-colors ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`} />
-              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white p-2 rounded-full hover:bg-orange-600 transition-colors">
+            <form onSubmit={handleSearch} className="relative">
+              <input 
+                type="text" 
+                placeholder="Search for anything" 
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onKeyPress={handleKeyPress}
+                className={`w-full px-4 py-2 border-2 rounded-full focus:border-orange-500 focus:outline-none transition-colors ${isDarkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`} 
+              />
+              <button 
+                type="submit"
+                onClick={handleSearch}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white p-2 rounded-full hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                aria-label="Search"
+              >
                 <Search size={16} />
               </button>
-            </div>
+            </form>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -171,9 +214,19 @@ const Header = () => {
             <Link to="/register" className={`transition-colors ${isDarkMode ? 'text-gray-300 hover:text-orange-400' : 'text-gray-700 hover:text-orange-500'}`}>
               Registry
             </Link>
+            <button
+              onClick={toggleChat}
+              type="button"
+              className={`transition-colors ${isDarkMode ? 'text-gray-300 hover:text-orange-400' : 'text-gray-700 hover:text-orange-500'}`}
+              aria-label="Open chat assistant"
+            >
+              <MessageCircle size={28} />
+            </button>
           </div>
         </nav>
       </div>
+      {/* Chatbot overlay mounted at root so it appears on all pages */}
+      <Chatbot open={isChatOpen} onOpenChange={setIsChatOpen} hideToggleButton />
     </header>
   );
 };

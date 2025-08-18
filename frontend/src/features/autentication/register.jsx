@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 const bangladeshData = [
     {
@@ -155,6 +155,7 @@ const SocialButton = ({ icon, text, onClick, isDarkMode }) => (
 
 const Register = () => {
     const { isDarkMode } = useDarkMode();
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         firstName: '',
@@ -233,9 +234,7 @@ const Register = () => {
           const data = await response.json();
 
           if (data.success) {
-              alert('Registration successful!');
-            // Redirect to login or dashboard
-            // navigate('/signin');
+              navigate('/createaccount', { state: { email: formData.email } });
           } else {
               alert(data.message || 'Registration failed');
           }

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { authApi } from '../../api/authApi';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Addresses = () => {
   const { isDarkMode } = useDarkMode();
+  const { user: contextUser } = useAuth();
   
   const [presentAddress, setPresentAddress] = useState({
     division: '',
@@ -19,6 +22,42 @@ const Addresses = () => {
   });
 
   const [sameAsPresent, setSameAsPresent] = useState(false);
+
+  // Load user address from backend on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadUserAddress = async () => {
+      try {
+        const data = await authApi.getMe();
+        if (!isMounted) return;
+        const u = data?.user || {};
+        setPresentAddress(prev => ({
+          ...prev,
+          division: u.division || '',
+          district: u.district || '',
+          upazila: u.upazila || ''
+        }));
+      } catch (error) {
+        if (!isMounted) return;
+        const u = contextUser || {};
+        setPresentAddress(prev => ({
+          ...prev,
+          division: u.division || '',
+          district: u.district || '',
+          upazila: u.upazila || ''
+        }));
+      }
+    };
+    loadUserAddress();
+    return () => { isMounted = false; };
+  }, [contextUser]);
+
+  // Keep permanent address synced when checkbox is enabled
+  useEffect(() => {
+    if (sameAsPresent) {
+      setPermanentAddress(presentAddress);
+    }
+  }, [sameAsPresent, presentAddress]);
 
   const handlePresentChange = (e) => {
     const { name, value } = e.target;

@@ -1,16 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { authApi } from '../../api/authApi';
 
 const Emails = () => {
   const { isDarkMode } = useDarkMode();
-  const { user } = useAuth();
+  const { user, token, login, logout } = useAuth();
+  const navigate = useNavigate();
   
   const [currentEmail, setCurrentEmail] = useState(user?.email || '');
   const [newEmail, setNewEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isVerificationStep, setIsVerificationStep] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  // Load the most up-to-date email from the backend on mount
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const data = await authApi.getMe();
+        if (data?.success && data.user) {
+          setCurrentEmail(data.user.email || '');
+          // Refresh auth context with latest user info, keep a valid token if present
+          const storedToken = localStorage.getItem('token');
+          if (storedToken && storedToken !== 'null' && storedToken !== 'undefined') {
+            login(data.user, storedToken);
+          } else if (token) {
+            // Fall back to context token if available
+            login(data.user, token);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load current user:', err);
+        // Fall back to auth context user if available
+        if (user?.email) {
+          setCurrentEmail(user.email);
+        }
+      }
+    };
+    loadCurrentUser();
+  }, []);
+
+  // Keep currentEmail in sync if AuthContext user loads/changes later
+  useEffect(() => {
+    if (user?.email && !isEditing && !isVerificationStep) {
+      setCurrentEmail(user.email);
+    }
+  }, [user?.email, isEditing, isVerificationStep]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,27 +61,21 @@ const Emails = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/update-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentEmail,
-          newEmail,
-          password
-        }),
-      });
-
-      const data = await response.json();
+      const data = await authApi.updateEmail({ currentEmail, newEmail, password });
 
       if (data.success) {
-        alert('Email updated successfully!');
+        alert('Email updated successfully. Please sign in again with your new email.');
         setCurrentEmail(newEmail);
         setNewEmail('');
         setConfirmEmail('');
         setPassword('');
         setIsEditing(false);
+        setIsVerificationStep(false);
+        setVerificationCode('');
+        setResendSeconds(0);
+        // Log out and redirect to sign-in so session restarts under the new email
+        logout();
+        navigate('/signin', { replace: true });
       } else {
         alert(data.message || 'Failed to update email');
       }
@@ -58,6 +92,14 @@ const Emails = () => {
     setIsEditing(false);
   };
 
+  const handleVerify = async (e) => {
+    e.preventDefault();
+  };
+
+  const handleResend = async () => {};
+
+  useEffect(() => {}, [resendSeconds]);
+
   return (
     <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-2xl mx-auto">
@@ -70,7 +112,7 @@ const Emails = () => {
             Change Email Address
           </h2>
 
-          {!isEditing ? (
+          {!isEditing && !isVerificationStep ? (
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -88,7 +130,7 @@ const Emails = () => {
                 Change Email
               </button>
             </div>
-          ) : (
+          ) : isEditing ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -158,8 +200,7 @@ const Emails = () => {
 
               <div className={`p-4 rounded-md ${isDarkMode ? 'bg-yellow-900 border border-yellow-700' : 'bg-yellow-50 border border-yellow-200'}`}>
                 <p className={`text-sm ${isDarkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>
-                  <strong>Important:</strong> After changing your email, you'll need to verify your new email address. 
-                  A verification link will be sent to your new email.
+                  <strong>Note:</strong> Your email will be updated immediately after submitting the form.
                 </p>
               </div>
 
@@ -183,6 +224,67 @@ const Emails = () => {
                   Cancel
                 </button>
               </div>
+            </form>
+          ) : (
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div className={`p-4 rounded-md ${isDarkMode ? 'bg-blue-900 border border-blue-700' : 'bg-blue-50 border border-blue-200'}`}>
+                <p className={`${isDarkMode ? 'text-blue-100' : 'text-blue-800'} text-sm`}>
+                  We sent a 6-digit verification code to <strong>{currentEmail}</strong>. Enter it below to verify your email.
+                </p>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  required
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                  placeholder="Enter 6-digit code"
+                />
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+                >
+                  Verify Email
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendSeconds > 0}
+                  className={`px-4 py-2 border rounded-md transition-colors ${
+                    resendSeconds > 0
+                      ? 'opacity-60 cursor-not-allowed ' + (isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700')
+                      : isDarkMode 
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {resendSeconds > 0 ? `Resend in ${resendSeconds}s` : 'Resend Code'}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => { setIsVerificationStep(false); setVerificationCode(''); }}
+                className={`px-4 py-2 text-sm underline mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                I'll verify later
+              </button>
             </form>
           )}
         </div>

@@ -1,9 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { Edit } from 'lucide-react';
+import { authApi } from '../../api/authApi';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Account = () => {
   const { isDarkMode } = useDarkMode();
+  const { user: contextUser } = useAuth();
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    bio: '',
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadUser = async () => {
+      try {
+        const data = await authApi.getMe();
+        if (!isMounted) return;
+        const u = data?.user || {};
+        setFormData({
+          firstName: u.firstName || '',
+          lastName: u.lastName || '',
+          email: u.email || '',
+          phone: u.phone || '',
+          bio: u.bio || '',
+        });
+      } catch (err) {
+        if (!isMounted) return;
+        const u = contextUser || {};
+        setFormData({
+          firstName: u.firstName || '',
+          lastName: u.lastName || '',
+          email: u.email || '',
+          phone: u.phone || '',
+          bio: '',
+        });
+      }
+    };
+    loadUser();
+    // Also listen to context email changes and reflect immediately
+    if (contextUser?.email) {
+      setFormData((prev) => ({ ...prev, email: contextUser.email }));
+    }
+    return () => { isMounted = false; };
+  }, [contextUser?.email]);
 
   return (
     <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -34,6 +79,7 @@ const Account = () => {
                     ? 'bg-gray-800 border-gray-600 text-gray-300' 
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                value={formData.firstName}
                 readOnly
               />
             </div>
@@ -48,6 +94,7 @@ const Account = () => {
                     ? 'bg-gray-800 border-gray-600 text-gray-300' 
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                value={formData.lastName}
                 readOnly
               />
             </div>
@@ -66,6 +113,7 @@ const Account = () => {
                     ? 'bg-gray-800 border-gray-600 text-gray-300' 
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                value={formData.email}
                 readOnly
               />
             </div>
@@ -80,6 +128,7 @@ const Account = () => {
                     ? 'bg-gray-800 border-gray-600 text-gray-500' 
                     : 'bg-gray-100 border-gray-300 text-gray-500'
                 } cursor-not-allowed`}
+                value={formData.phone}
                 readOnly
                 disabled
               />
@@ -98,6 +147,7 @@ const Account = () => {
                   ? 'bg-gray-800 border-gray-600 text-gray-300' 
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none`}
+              value={formData.bio}
               readOnly
             />
           </div>

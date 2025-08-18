@@ -2,6 +2,52 @@ import React, { useState } from 'react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { Eye, EyeOff, Shield, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
+// Hoisted child components to keep their identity stable across renders
+const PasswordInput = ({ isDarkMode, label, name, value, onChange, showPassword, toggleShow, placeholder, autoComplete }) => (
+  <div>
+    <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      {label}
+    </label>
+    <div className="relative">
+      <input
+        type={showPassword ? 'text' : 'password'}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className={`w-full px-4 py-3 pr-12 rounded-lg border ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+        } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
+        required
+      />
+      <button
+        type="button"
+        onClick={toggleShow}
+        onMouseDown={(e) => e.preventDefault()}
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+          isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+      </button>
+    </div>
+  </div>
+);
+
+const ValidationItem = ({ isDarkMode, isValid, text }) => (
+  <div className={`flex items-center gap-2 text-sm ${
+    isValid 
+      ? isDarkMode ? 'text-green-400' : 'text-green-600'
+      : isDarkMode ? 'text-gray-400' : 'text-gray-500'
+  }`}>
+    <CheckCircle size={16} className={isValid ? 'text-green-500' : 'text-gray-400'} />
+    {text}
+  </div>
+);
+
 const Security = () => {
   const { isDarkMode } = useDarkMode();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -110,49 +156,6 @@ const Security = () => {
     }
   };
 
-  const PasswordInput = ({ label, name, value, onChange, showPassword, toggleShow, placeholder }) => (
-    <div>
-      <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={showPassword ? 'text' : 'password'}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className={`w-full px-4 py-3 pr-12 rounded-lg border ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
-              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-          } focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
-          required
-        />
-        <button
-          type="button"
-          onClick={toggleShow}
-          className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-            isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-        </button>
-      </div>
-    </div>
-  );
-
-  const ValidationItem = ({ isValid, text }) => (
-    <div className={`flex items-center gap-2 text-sm ${
-      isValid 
-        ? isDarkMode ? 'text-green-400' : 'text-green-600'
-        : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-    }`}>
-      <CheckCircle size={16} className={isValid ? 'text-green-500' : 'text-gray-400'} />
-      {text}
-    </div>
-  );
-
   return (
     <div className={`min-h-screen p-6 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-2xl mx-auto">
@@ -190,6 +193,7 @@ const Security = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Current Password */}
             <PasswordInput
+              isDarkMode={isDarkMode}
               label="Current Password"
               name="currentPassword"
               value={passwordData.currentPassword}
@@ -197,10 +201,12 @@ const Security = () => {
               showPassword={showCurrentPassword}
               toggleShow={() => setShowCurrentPassword(!showCurrentPassword)}
               placeholder="Enter your current password"
+              autoComplete="current-password"
             />
 
             {/* New Password */}
             <PasswordInput
+              isDarkMode={isDarkMode}
               label="New Password"
               name="newPassword"
               value={passwordData.newPassword}
@@ -208,6 +214,7 @@ const Security = () => {
               showPassword={showNewPassword}
               toggleShow={() => setShowNewPassword(!showNewPassword)}
               placeholder="Enter your new password"
+              autoComplete="new-password"
             />
 
             {/* Password Requirements */}
@@ -219,17 +226,18 @@ const Security = () => {
                   Password Requirements:
                 </p>
                 <div className="space-y-2">
-                  <ValidationItem isValid={passwordValidation.minLength} text="At least 8 characters" />
-                  <ValidationItem isValid={passwordValidation.hasUpperCase} text="One uppercase letter" />
-                  <ValidationItem isValid={passwordValidation.hasLowerCase} text="One lowercase letter" />
-                  <ValidationItem isValid={passwordValidation.hasNumbers} text="One number" />
-                  <ValidationItem isValid={passwordValidation.hasSpecialChar} text="One special character" />
+                  <ValidationItem isDarkMode={isDarkMode} isValid={passwordValidation.minLength} text="At least 8 characters" />
+                  <ValidationItem isDarkMode={isDarkMode} isValid={passwordValidation.hasUpperCase} text="One uppercase letter" />
+                  <ValidationItem isDarkMode={isDarkMode} isValid={passwordValidation.hasLowerCase} text="One lowercase letter" />
+                  <ValidationItem isDarkMode={isDarkMode} isValid={passwordValidation.hasNumbers} text="One number" />
+                  <ValidationItem isDarkMode={isDarkMode} isValid={passwordValidation.hasSpecialChar} text="One special character" />
                 </div>
               </div>
             )}
 
             {/* Confirm Password */}
             <PasswordInput
+              isDarkMode={isDarkMode}
               label="Confirm New Password"
               name="confirmPassword"
               value={passwordData.confirmPassword}
@@ -237,6 +245,7 @@ const Security = () => {
               showPassword={showConfirmPassword}
               toggleShow={() => setShowConfirmPassword(!showConfirmPassword)}
               placeholder="Confirm your new password"
+              autoComplete="new-password"
             />
 
             {/* Password Match Indicator */}

@@ -17,13 +17,21 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in on app start
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    const rawToken = localStorage.getItem('token');
+    const rawUser = localStorage.getItem('user');
+
+    const validToken = rawToken && rawToken !== 'null' && rawToken !== 'undefined' ? rawToken : null;
+    let parsedUser = null;
+    if (rawUser && rawUser !== 'null' && rawUser !== 'undefined') {
+      try {
+        parsedUser = JSON.parse(rawUser);
+      } catch (_err) {
+        parsedUser = null;
+      }
     }
+
+    if (validToken) setToken(validToken);
+    if (parsedUser) setUser(parsedUser);
     setIsLoading(false);
   }, []);
 
