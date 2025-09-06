@@ -10,17 +10,54 @@ Repository structure
 - backend – Express API, MongoDB models, services, and routes
 - frontend – React app (Vite + Tailwind)
 
-Key features
+## Key Features
 
-- Authentication: Register, login, refresh token rotation via HTTP‑only cookie; protected routes via Bearer token
-- Products: Create, update, delete, search, category browsing, per‑seller listing; image uploads with Multer, served from /uploads
-- Checkout: Stripe checkout session creation and post‑payment order confirmation
-- Orders: Buyer and seller views, analytics and stats for sellers
-- Reviews: Product and shop reviews with optional images
-- Shops: Public shop pages and seller shop profiles
-- Admin: Users, products, orders, reviews, and help requests management
-- Help desk: Users can open help tickets; admins can review and update status
-- Chatbot: Gemini model integration with optional image prompts
+### 🔐 Authentication & Profiles
+- Register, login, logout with JWT + refresh tokens (secure HTTP-only cookies)  
+- Email verification, password reset, and multi-session logout  
+- User profiles with editable details and roles (buyer, seller, admin)
+
+### 🛍️ Products & Catalog
+- Create, update, delete, and manage product/service listings  
+- Product catalog with categories, subcategories, and seller-specific pages  
+- Advanced search and multi-filter browsing  
+- Detailed product pages with descriptions, ratings, reviews, and images  
+- AI-assisted product description generation (Gemini integration)  
+- Image uploads for products and reviews
+
+### 🏪 Shops & Dashboards
+- Public shop pages and seller profiles  
+- Buyer dashboard for tracking orders and reviews  
+- Seller dashboard with order management, analytics, and sales statistics  
+- Shop management tools for sellers
+
+### 💬 Messaging 
+- user ↔ admin help messaging system  
+- Real-time notifications for new orders, sales, reviews, disputes, and updates
+
+### 💳 Checkout & Orders
+- Stripe integration for secure payments  
+- Automatic post-payment order confirmation  
+- Buyer and seller order management (statuses, tracking, analytics)  
+
+### ⭐ Reviews & Ratings
+- Product and shop reviews (with optional images)  
+- Star ratings to build reputation and trust  
+
+### 🆘 Support & Dispute Resolution
+- Built-in help desk for submitting and tracking tickets  
+- Admin-mediated dispute resolution between buyers and sellers  
+- Help center with resources and FAQs  
+
+### ⚙️ Admin Panel
+- Manage users, products, orders, reviews, and support tickets  
+- Monitor platform metrics and activity summaries  
+
+### 🤖 AI & Chatbot
+- AI chatbot powered by **Gemini API** (text + image prompts)  
+- Product description auto-generation and suggestions  
+
+---
 
 Tech stack
 
