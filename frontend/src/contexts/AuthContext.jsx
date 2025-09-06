@@ -1,3 +1,4 @@
+// AuthContext: stores current user and token, provides login/logout helpers
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -15,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is logged in on app start
+  // Restore user and token from localStorage on app start
   useEffect(() => {
     const rawToken = localStorage.getItem('token');
     const rawUser = localStorage.getItem('user');
@@ -42,12 +43,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => {
+  // Logout current session; optionally from all sessions
+  const logout = async (everywhere = false) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('staySignedIn');
+    // Also clear cart storage to prevent showing old items
+    try { localStorage.removeItem('cart'); } catch (_) {}
+    try {
+      if (everywhere) {
+        await (await import('../api/authApi')).authApi.logoutAll();
+      } else {
+        await (await import('../api/authApi')).authApi.logout();
+      }
+    } catch (_) {}
   };
 
   const isAuthenticated = () => {

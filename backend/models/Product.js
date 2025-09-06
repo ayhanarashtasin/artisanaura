@@ -14,6 +14,11 @@ const productSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Performance indexes for frequent queries
+productSchema.index({ category: 1, subcategory: 1, createdAt: -1 });
+productSchema.index({ seller: 1, createdAt: -1 });
+productSchema.index({ name: 'text', description: 'text' });
+
 const Product = mongoose.model('Product', productSchema);
 
 export default Product;

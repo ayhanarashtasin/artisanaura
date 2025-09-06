@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-// API Base URL
-const API_BASE_URL = 'http://localhost:3000/api';
+import { api } from '../api/client';
 
 /**
  * Search API Service
@@ -44,7 +41,8 @@ export class SearchService {
       params.append('page', page);
       params.append('limit', limit);
 
-      const response = await axios.get(`${API_BASE_URL}/products/search?${params}`);
+      // Backend supports path param: GET /api/products/search/:query
+      const response = await api.get(`/products/search/${encodeURIComponent(query)}`);
       return response.data;
     } catch (error) {
       console.error('Search API Error:', error);
@@ -61,8 +59,8 @@ export class SearchService {
     try {
       if (!query || query.length < 2) return [];
       
-      const response = await axios.get(`${API_BASE_URL}/products/suggestions?q=${encodeURIComponent(query)}`);
-      return response.data.suggestions || [];
+      // Not implemented on backend; return empty list for now
+      return [];
     } catch (error) {
       console.error('Suggestions API Error:', error);
       return [];
@@ -75,8 +73,8 @@ export class SearchService {
    */
   static async getPopularSearches() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/products/popular-searches`);
-      return response.data.searches || [];
+      // Not implemented on backend; return empty list for now
+      return [];
     } catch (error) {
       console.error('Popular searches API Error:', error);
       return [];

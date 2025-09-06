@@ -1,28 +1,23 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3000/api';
-
-const api = axios.create({
-	baseURL: API_BASE_URL,
-});
-
-api.interceptors.request.use((config) => {
-	const token = localStorage.getItem('token');
-	if (token && token !== 'null' && token !== 'undefined') {
-		config.headers.Authorization = `Bearer ${token}`;
-	} else {
-		if (config.headers && 'Authorization' in config.headers) {
-			delete config.headers.Authorization;
-		}
-	}
-	return config;
-});
+import { api, API_BASE_URL } from './client';
 
 export const authApi = {
 	getMe: async () => {
 		const response = await api.get('/me');
 		return response.data;
 	},
+	getShop: async () => {
+		const response = await api.get('/shop');
+		return response.data;
+	},
+	saveShop: async (payload) => {
+		const response = await api.post('/shop', payload);
+		return response.data;
+	},
+    getShopBySeller: async (sellerId) => {
+        const response = await api.get(`/shop/seller/${sellerId}`);
+        return response.data;
+    },
 	updateEmail: async (payload) => {
 		try {
 			// For this endpoint we do not require token; use a raw axios call without interceptor header
@@ -41,6 +36,23 @@ export const authApi = {
 		return response.data;
 	},
 	// No verification flow needed now
+    logout: async () => {
+        try {
+            await axios.post(`${API_BASE_URL}/logout`, {}, { withCredentials: true });
+            return { success: true };
+        } catch (e) {
+            return { success: false };
+        }
+    },
+    logoutAll: async () => {
+        try {
+            await api.post('/logout-all');
+            try { await axios.post(`${API_BASE_URL}/logout`, {}, { withCredentials: true }); } catch (_) {}
+            return { success: true };
+        } catch (e) {
+            return { success: false };
+        }
+    },
 };
 
 

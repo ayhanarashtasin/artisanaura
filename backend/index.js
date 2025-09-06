@@ -5,6 +5,13 @@ import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js'; // 1. Import product routes
 import chatbotRoutes from './routes/chatbotRoutes.js';
+import checkoutRoutes from './routes/checkoutRoutes.js';
+import shopRoutes from './routes/shopRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import cookieParser from 'cookie-parser';
+import adminRoutes from './routes/adminRoutes.js';
+import helpRoutes from './routes/helpRoutes.js';
 // Load environment variables
 dotenv.config();
 
@@ -23,6 +30,7 @@ app.use(cors({
 
 // Parse JSON request bodies
 app.use(express.json());
+app.use(cookieParser());
 
 // 2. Serve static files from the 'uploads' directory
 // This makes images accessible via URLs like http://localhost:3000/uploads/filename.jpg
@@ -38,6 +46,12 @@ app.use('/api', authRoutes);
 app.use('/api/products', productRoutes);
 
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/checkout', checkoutRoutes);
+app.use('/api/shop', shopRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/help', helpRoutes);
 // --- Server Initialization ---
 
 // A simple root route to confirm the server is running

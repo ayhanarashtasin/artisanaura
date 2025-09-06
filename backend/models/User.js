@@ -18,6 +18,16 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+        index: true
+    },
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
     phone: {
         type: String,
         trim: true
@@ -33,6 +43,12 @@ const userSchema = new mongoose.Schema({
     upazila: {
         type: String,
         required: true
+    },
+    shop: {
+        name: { type: String, trim: true },
+        address: { type: String, trim: true },
+        isSetup: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
     },
     isEmailVerified: {
         type: Boolean,

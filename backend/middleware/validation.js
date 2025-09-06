@@ -98,20 +98,45 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     // 5. Attach user information to the request object for later use.
-    req.user = { id: user._id, email: user.email };
+    req.user = { id: user._id, email: user.email, role: user.role };
     
     // 6. If everything is valid, proceed to the protected route's controller.
     next();
 
   } catch (error) {
     // This block runs ONLY if jwt.verify() fails.
-    console.error('Auth middleware error:', error.message);
-    
-    // This is where your error message comes from. It's the correct behavior
-    // when the token is invalid or expired.
-    return res.status(403).json({
+    const isExpired = error && (error.name === 'TokenExpiredError' || /expired/i.test(String(error.message)));
+    // Avoid noisy logs for expected expiry; still log unexpected errors
+    if (!isExpired) {
+      console.error('Auth middleware error:', error.message);
+    }
+    return res.status(isExpired ? 401 : 403).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: isExpired ? 'Token expired. Please sign in again.' : 'Invalid token'
     });
+  }
+};
+
+// --- Admin Authorization Middleware ---
+export const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    // If role is present on req.user (set by authenticateToken), use it; else fetch
+    let role = req.user.role;
+    if (!role) {
+      const user = await User.findById(req.user.id).select('role');
+      role = user?.role;
+    }
+
+    if (role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

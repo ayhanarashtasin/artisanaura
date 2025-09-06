@@ -1,3 +1,4 @@
+// Lightweight toast for transient notifications
 import React, { useEffect } from 'react';
 
 const typeStyles = {

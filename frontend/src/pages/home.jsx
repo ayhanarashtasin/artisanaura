@@ -1,3 +1,4 @@
+// Home page: showcases top categories and brand messaging
 import React from 'react';
 import Header from '../components/common/Header';
 import { useDarkMode } from '../contexts/DarkModeContext';

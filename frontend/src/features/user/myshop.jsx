@@ -3,12 +3,16 @@ import { useDarkMode } from '../../contexts/DarkModeContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { orderApi } from '../../api/orderApi'
+import { authApi } from '../../api/authApi'
 
 const MyShop = () => {
   const { isDarkMode } = useDarkMode()
   const { user, token } = useAuth()
   const navigate = useNavigate()
   const [productCount, setProductCount] = useState(0)
+  const [ordersCount, setOrdersCount] = useState(0)
+  const [revenue, setRevenue] = useState(0)
 
   useEffect(() => {
     let isMounted = true
@@ -26,7 +30,32 @@ const MyShop = () => {
         setProductCount(0)
       }
     }
-    fetchProductCount()
+    const enforceShopSetup = async () => {
+      try {
+        const res = await authApi.getShop()
+        const isSetup = !!res?.shop?.isSetup
+        if (!isSetup) {
+          navigate('/profile/public', { replace: true })
+          return
+        }
+      } catch (_) {
+        // if shop fetch fails, push to setup as well
+        navigate('/profile/public', { replace: true })
+        return
+      }
+      fetchProductCount()
+      try {
+        const stats = await orderApi.sellerStats()
+        if (!isMounted) return
+        setOrdersCount(Number(stats?.ordersCount) || 0)
+        setRevenue(Number(stats?.revenue) || 0)
+      } catch (_) {
+        if (!isMounted) return
+        setOrdersCount(0)
+        setRevenue(0)
+      }
+    }
+    enforceShopSetup()
     return () => { isMounted = false }
   }, [token])
 
@@ -78,11 +107,11 @@ const MyShop = () => {
           </div>
           <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
             <h3 className="text-lg font-semibold mb-2">Total Orders</h3>
-            <p className="text-3xl font-bold text-green-600">0</p>
+            <p className="text-3xl font-bold text-green-600">{ordersCount}</p>
           </div>
           <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
             <h3 className="text-lg font-semibold mb-2">Revenue</h3>
-            <p className="text-3xl font-bold text-purple-600">$0</p>
+            <p className="text-3xl font-bold text-purple-600">${revenue.toFixed(2)}</p>
           </div>
         </div>
 

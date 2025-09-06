@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../api/client';
 import { Eye, EyeOff, Shield, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
 // Hoisted child components to keep their identity stable across renders
@@ -50,6 +52,7 @@ const ValidationItem = ({ isDarkMode, isValid, text }) => (
 
 const Security = () => {
   const { isDarkMode } = useDarkMode();
+  const { logout } = useAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -124,19 +127,10 @@ const Security = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming token-based auth
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        }),
+      const { data } = await api.post('/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setMessage({ type: 'success', text: 'Password changed successfully!' });
@@ -165,6 +159,31 @@ const Security = () => {
           <h1 className={`text-3xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Security Settings
           </h1>
+        </div>
+
+        {/* Session Controls */}
+        <div className={`mt-6 rounded-lg border p-6 ${
+          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Sessions
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => logout(false)}
+              className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-900"
+            >
+              Sign out on this device
+            </button>
+            <button
+              type="button"
+              onClick={() => logout(true)}
+              className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white"
+            >
+              Sign out everywhere
+            </button>
+          </div>
         </div>
 
         {/* Change Password Section */}
